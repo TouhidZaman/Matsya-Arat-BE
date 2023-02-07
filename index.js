@@ -19,18 +19,29 @@ const client = new MongoClient(uri, {
 const run = async () => {
   try {
     const db = client.db("fishManagerDB");
-    const usersCollection = db.collection("users");
+    const customersCollection = db.collection("customers");
 
-    app.post("/users", async (req, res) => {
+    app.post("/customers", async (req, res) => {
       const user = req.body;
-      const result = await usersCollection.insertOne(user);
+      const result = await customersCollection.insertOne(user);
       res.send(result);
     });
 
-    app.get("/users/:id", async (req, res) => {
-      const userId = req.params.id;
+    //Get customers
+    app.get("/customers/", async (req, res) => {
       try {
-        const user = await usersCollection.findOne({ _id: ObjectId(userId) });
+        const result = customersCollection.find({});
+        const customers = await result.toArray();
+        res.status(200).json(customers);
+      } catch (err) {
+        res.status(500).json(err);
+      }
+    });
+
+    app.get("/customers/:id", async (req, res) => {
+      const customerId = req.params.id;
+      try {
+        const user = await customersCollection.findOne({ _id: ObjectId(customerId) });
         res.status(200).json(user);
       } catch (err) {
         res.status(500).json(err);
