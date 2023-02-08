@@ -41,12 +41,30 @@ const run = async () => {
     app.get("/customers/:id", async (req, res) => {
       const customerId = req.params.id;
       try {
-        const user = await customersCollection.findOne({ _id: ObjectId(customerId) });
-        res.status(200).json(user);
+        const customer = await customersCollection.findOne({ _id: ObjectId(customerId) });
+        res.status(200).json(customer);
       } catch (err) {
         res.status(500).json(err);
       }
     });
+
+    //Updating a Customer
+    app.patch("/customers/:id", async (req, res) => {
+      const customerId = req.params?.id;
+      const updatedCustomer = req.body;
+      try {
+          const filter = { _id: ObjectId(customerId) };
+          const updateDoc = {
+              $set: {
+                  ...updatedCustomer,
+              },
+          };
+          const result = await customersCollection.updateOne(filter, updateDoc);
+          res.status(200).send(result);
+      } catch (error) {
+          res.status(500).send(error);
+      }
+  });
   } finally {
   }
 };
