@@ -99,10 +99,23 @@ const run = async () => {
       }
     });
 
-    //Get transaction
+    //Get all sales
     app.get("/sales/", async (req, res) => {
       try {
-        const result = salesCollection.find({});
+        const result = salesCollection.find({}).sort({ date: -1 });
+        const sales = await result.toArray();
+        res.status(200).json(sales);
+      } catch (err) {
+        res.status(500).json(err);
+      }
+    });
+
+    //Get sales by buyer
+    app.get("/sales/buyer/:buyerId", async (req, res) => {
+      const buyerId = req.params.buyerId;
+      const query = { buyerId };
+      try {
+        const result = salesCollection.find(query).sort({ date: -1 });
         const sales = await result.toArray();
         res.status(200).json(sales);
       } catch (err) {
