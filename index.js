@@ -102,7 +102,7 @@ const run = async () => {
     //Get all sales
     app.get("/sales/", async (req, res) => {
       try {
-        const result = salesCollection.find({}).sort({ date: -1 });
+        const result = salesCollection.find({}).sort({ createdAt: -1 });
         const sales = await result.toArray();
         res.status(200).json(sales);
       } catch (err) {
@@ -115,13 +115,72 @@ const run = async () => {
       const buyerId = req.params.buyerId;
       const query = { buyerId };
       try {
-        const result = salesCollection.find(query).sort({ date: -1 });
+        const result = salesCollection.find(query).sort({ createdAt: -1 });
         const sales = await result.toArray();
         res.status(200).json(sales);
       } catch (err) {
         res.status(500).json(err);
       }
     });
+
+    //Get sales by sellerId
+    app.get("/sales/seller/:sellerId", async (req, res) => {
+      const sellerId = req.params.sellerId;
+      try {
+        const result = salesCollection.aggregate([
+          { $sort: { createdAt: -1 } },
+          {
+            $project: {
+              buyerId: 1,
+              buyerName: 1,
+              lineItems: {
+                $filter: {
+                  input: "$lineItems",
+                  as: "item",
+                  cond: { $eq: ["$$item.sellerId", sellerId] },
+                },
+              },
+              date: 1,
+            },
+          },
+          {
+            $group: {
+              _id: "$date",
+              salesByDate: {
+                $push: {
+                  buyerName: "$buyerName",
+                  lineItems: "$lineItems",
+                  date: "$date",
+                },
+                // $push: {
+                //   lineItems: {
+                //     $cond: [
+                //       { $eq: [{ $size: "$lineItems" }, 0] },
+                //       "$$REMOVE",
+                //       {
+                //         buyerName: "$buyerName",
+                //         lineItems: "$lineItems",
+                //         date: "$date",
+                //       },
+                //     ],
+                //   },
+                // },
+              },
+            },
+          },
+        ]);
+
+        const sales = await result.toArray();
+        res.status(200).json(sales);
+      } catch (err) {
+        res.status(500).json(err);
+      }
+    });
+
+    // const result = salesCollection.find({
+    //   date: "2023-02-28",
+    //   lineItems: { $elemMatch: { sellerId: { $eq: sellerId } } },
+    // });
   } finally {
   }
 };
