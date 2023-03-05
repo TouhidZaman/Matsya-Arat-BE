@@ -31,11 +31,15 @@ const run = async () => {
     //Get customers
     app.get("/customers/", async (req, res) => {
       let query = {};
+      let sortQuery = {};
       if (req.query.type) {
         query = { type: req.query.type };
       }
+      if (req.query.sortBy) {
+        sortQuery = { [req.query.sortBy]: -1 };
+      }
       try {
-        const result = customersCollection.find(query);
+        const result = customersCollection.find(query).sort(sortQuery);
         const customers = await result.toArray();
         res.status(200).json(customers);
       } catch (err) {
@@ -79,7 +83,7 @@ const run = async () => {
       #############################
     */
 
-    //Add transaction
+    //Add new Sale
     app.post("/sales", async (req, res) => {
       const newSale = req.body;
       if (newSale?.buyerId) {
@@ -128,7 +132,6 @@ const run = async () => {
       const sellerId = req.params.sellerId;
       try {
         const result = salesCollection.aggregate([
-          { $sort: { createdAt: -1 } },
           {
             $project: {
               buyerId: 1,
@@ -168,6 +171,7 @@ const run = async () => {
               },
             },
           },
+          { $sort: { _id: -1 } },
         ]);
 
         const sales = await result.toArray();
