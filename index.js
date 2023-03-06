@@ -31,7 +31,7 @@ const run = async () => {
     //Get customers
     app.get("/customers/", async (req, res) => {
       let query = {};
-      let sortQuery = {};
+      let sortQuery = { createdAt: -1 };
       if (req.query.type) {
         query = { type: req.query.type };
       }
