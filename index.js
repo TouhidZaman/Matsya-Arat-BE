@@ -195,7 +195,7 @@ app.get("/", (req, res) => {
   res.send({
     status: true,
     data: {
-      message: "Welcome to fish manager server",
+      message: "Welcome to matsya-arat-server",
       author: {
         name: "Muhammad Touhiduzzaman",
         email: "touhid4bd@gmail.com",
