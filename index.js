@@ -21,6 +21,7 @@ const run = async () => {
     const db = client.db("fishManagerDB");
     const customersCollection = db.collection("customers");
     const salesCollection = db.collection("sales");
+    const paymentsCollection = db.collection("payments");
 
     app.post("/customers", async (req, res) => {
       const user = req.body;
@@ -79,7 +80,7 @@ const run = async () => {
 
     /*
       #############################
-      #### sales API's #####
+      ####### sales API's #########
       #############################
     */
 
@@ -88,7 +89,7 @@ const run = async () => {
       const newSale = req.body;
       if (newSale?.buyerId) {
         try {
-          const saleResult = await salesCollection.insertOne(newSale);
+          const paymentResult = await salesCollection.insertOne(newSale);
           const filter = { _id: ObjectId(newSale.buyerId) };
           const updateDoc = {
             $set: {
@@ -96,7 +97,7 @@ const run = async () => {
             },
           };
           await customersCollection.updateOne(filter, updateDoc);
-          res.status(200).send(saleResult);
+          res.status(200).send(paymentResult);
         } catch (error) {
           res.status(500).send(error);
         }
@@ -185,6 +186,56 @@ const run = async () => {
     //   date: "2023-02-28",
     //   lineItems: { $elemMatch: { sellerId: { $eq: sellerId } } },
     // });
+
+    /*
+      #############################
+      ###### Payments API's #######
+      #############################
+    */
+
+    //Add new payment
+    app.post("/payments", async (req, res) => {
+      const newPayment = req.body;
+      if (newPayment?.buyerId) {
+        try {
+          const paymentResult = await paymentsCollection.insertOne(newPayment);
+          const filter = { _id: ObjectId(newPayment.buyerId) };
+          const updateDoc = {
+            $set: {
+              dueAmount: newPayment.currentDue,
+            },
+          };
+          await customersCollection.updateOne(filter, updateDoc);
+          res.status(200).send(paymentResult);
+        } catch (error) {
+          res.status(500).send(error);
+        }
+      }
+    });
+
+    //Get all payments
+    app.get("/payments/", async (req, res) => {
+      try {
+        const result = paymentsCollection.find({}).sort({ createdAt: -1 });
+        const payments = await result.toArray();
+        res.status(200).json(payments);
+      } catch (err) {
+        res.status(500).json(err);
+      }
+    });
+
+    //Get payments by buyer
+    app.get("/payments/buyer/:buyerId", async (req, res) => {
+      const buyerId = req.params.buyerId;
+      const query = { buyerId };
+      try {
+        const result = paymentsCollection.find(query).sort({ createdAt: -1 });
+        const payments = await result.toArray();
+        res.status(200).json(payments);
+      } catch (err) {
+        res.status(500).json(err);
+      }
+    });
   } finally {
   }
 };
