@@ -117,6 +117,11 @@ const run = async () => {
 
     //Get sales by date group
     app.get("/sales/date", async (req, res) => {
+      //Applying sortBy functionalities
+      const sortBy = req.query.sortBy; // ASC
+      let sortQuery = { _id: -1 };
+      if (sortBy && sortBy.toUpperCase() === "ASC") sortQuery = { _id: 1 };
+
       try {
         const dataLimit = +req.query.limit;
         const result = salesCollection.aggregate([
@@ -142,7 +147,7 @@ const run = async () => {
               paid: { $sum: "$paid" },
             },
           },
-          { $sort: { _id: -1 } },
+          { $sort: sortQuery },
         ]);
 
         //Applying data limit
@@ -256,6 +261,11 @@ const run = async () => {
 
     //Get payments by date group
     app.get("/payments/date", async (req, res) => {
+      //Applying sortBy functionalities
+      const sortBy = req.query.sortBy; // ASC
+      let sortQuery = { _id: -1 };
+      if (sortBy && sortBy.toUpperCase() === "ASC") sortQuery = { _id: 1 };
+
       try {
         const dataLimit = +req.query.limit;
         const result = paymentsCollection.aggregate([
@@ -273,7 +283,7 @@ const run = async () => {
               totalPaid: { $sum: "$paid" },
             },
           },
-          { $sort: { _id: -1 } },
+          { $sort: sortQuery },
         ]);
 
         //Applying data limit
