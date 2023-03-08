@@ -115,6 +115,49 @@ const run = async () => {
       }
     });
 
+    //Get sales by date group
+    app.get("/sales/date", async (req, res) => {
+      try {
+        const dataLimit = +req.query.limit;
+        const result = salesCollection.aggregate([
+          {
+            $group: {
+              _id: "$date",
+              salesByDate: {
+                $push: {
+                  buyerId: "$buyerId",
+                  buyerName: "$buyerName",
+                  // lineItems: "$lineItems",
+                  subTotal: "$subTotal",
+                  totalQuantity: "$totalQuantity",
+                  adjustment: "$adjustment",
+                  paid: "$paid",
+                  date: "$date",
+                },
+              },
+              quantity: { $sum: "$totalQuantity" },
+              adjustment: { $sum: "$adjustment" },
+              subTotal: { $sum: "$subTotal" },
+              total: { $sum: { $add: ["$subTotal", "$adjustment"] } },
+              paid: { $sum: "$paid" },
+            },
+          },
+          { $sort: { _id: -1 } },
+        ]);
+
+        //Applying data limit
+        let salesByDateGroup = [];
+        if (dataLimit && typeof dataLimit === "number") {
+          salesByDateGroup = await result.limit(dataLimit).toArray();
+        } else {
+          salesByDateGroup = await result.toArray();
+        }
+        res.status(200).json(salesByDateGroup);
+      } catch (err) {
+        res.status(500).json(err);
+      }
+    });
+
     //Get sales by buyer
     app.get("/sales/buyer/:buyerId", async (req, res) => {
       const buyerId = req.params.buyerId;
@@ -156,19 +199,6 @@ const run = async () => {
                   lineItems: "$lineItems",
                   date: "$date",
                 },
-                // $push: {
-                //   lineItems: {
-                //     $cond: [
-                //       { $eq: [{ $size: "$lineItems" }, 0] },
-                //       "$$REMOVE",
-                //       {
-                //         buyerName: "$buyerName",
-                //         lineItems: "$lineItems",
-                //         date: "$date",
-                //       },
-                //     ],
-                //   },
-                // },
               },
             },
           },
@@ -219,6 +249,41 @@ const run = async () => {
         const result = paymentsCollection.find({}).sort({ createdAt: -1 });
         const payments = await result.toArray();
         res.status(200).json(payments);
+      } catch (err) {
+        res.status(500).json(err);
+      }
+    });
+
+    //Get payments by date group
+    app.get("/payments/date", async (req, res) => {
+      try {
+        const dataLimit = +req.query.limit;
+        const result = paymentsCollection.aggregate([
+          {
+            $group: {
+              _id: "$date",
+              paymentsByDate: {
+                $push: {
+                  buyerId: "$buyerId",
+                  buyerName: "$buyerName",
+                  paid: "$paid",
+                  date: "$date",
+                },
+              },
+              totalPaid: { $sum: "$paid" },
+            },
+          },
+          { $sort: { _id: -1 } },
+        ]);
+
+        //Applying data limit
+        let paymentsByDateGroup = [];
+        if (dataLimit && typeof dataLimit === "number") {
+          paymentsByDateGroup = await result.limit(dataLimit).toArray();
+        } else {
+          paymentsByDateGroup = await result.toArray();
+        }
+        res.status(200).json(paymentsByDateGroup);
       } catch (err) {
         res.status(500).json(err);
       }
